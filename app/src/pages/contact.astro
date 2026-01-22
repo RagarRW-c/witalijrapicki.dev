@@ -1,6 +1,11 @@
 ---
+import BaseLayout from "../layouts/BaseLayout.astro";
 import ContactForm from "../components/ContactForm.astro";
 ---
 
-<h1>Kontakt</h1>
-<ContactForm />
+<BaseLayout title="Contact">
+  <section class="max-w-xl mx-auto mt-16">
+    <h1 class="text-3xl font-semibold mb-6">Contact</h1>
+    <ContactForm />
+  </section>
+</BaseLayout>
