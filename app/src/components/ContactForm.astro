@@ -1,55 +1,29 @@
-<form id="contact-form">
-  <input
-    type="text"
-    name="name"
-    placeholder="Imię"
-    required
-  />
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  status.textContent = "Wysyłanie...";
 
-  <input
-    type="email"
-    name="email"
-    placeholder="Email"
-    required
-  />
+  const data = Object.fromEntries(new FormData(form));
 
-  <textarea
-    name="message"
-    placeholder="Wiadomość"
-    required
-  ></textarea>
+  try {
+    const res = await fetch(
+      "https://d05rer8h1m.execute-api.eu-central-1.amazonaws.com/prod/contact",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }
+    );
 
-  <button type="submit">Wyślij</button>
+    const result = await res.json();
 
-  <p id="form-status"></p>
-</form>
-
-<script>
-  const form = document.getElementById("contact-form");
-  const status = document.getElementById("form-status");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    status.textContent = "Wysyłanie...";
-
-    const data = Object.fromEntries(new FormData(form));
-
-    try {
-      const res = await fetch(
-        "https://d05rer8h1m.execute-api.eu-central-1.amazonaws.com/prod/contact",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!res.ok) throw new Error("Request failed");
-
-      status.textContent = "Wiadomość wysłana ✔";
-      form.reset();
-    } catch (err) {
-      status.textContent = "Błąd. Spróbuj ponownie.";
+    if (!res.ok) {
+      throw new Error(result.error || "Request failed");
     }
-  });
-</script>
+
+    status.textContent = "Wiadomość wysłana ✔";
+    form.reset();
+  } catch (err) {
+    console.error(err);
+    status.textContent = "Błąd wysyłania formularza.";
+  }
+});
