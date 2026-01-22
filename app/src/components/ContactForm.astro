@@ -32,34 +32,34 @@
   <p id="status" class="text-sm"></p>
 </form>
 
-<script>
-const form = document.getElementById("contact-form");
-const status = document.getElementById("status");
+<script is:inline>
+  const form = document.getElementById("contact-form");
+  const status = document.getElementById("status");
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  status.textContent = "Sending...";
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    status.textContent = "Sending...";
 
-  const data = Object.fromEntries(new FormData(form));
+    const data = Object.fromEntries(new FormData(form));
 
-  try {
-    const res = await fetch(
-      "https://d05rer8h1m.execute-api.eu-central-1.amazonaws.com/prod/contact",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }
-    );
+    try {
+      const res = await fetch(
+        "https://d05rer8h1m.execute-api.eu-central-1.amazonaws.com/prod/contact",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
 
-    if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error();
 
-    status.textContent = "Message sent successfully!";
-    status.className = "text-green-600";
-    form.reset();
-  } catch {
-    status.textContent = "Something went wrong. Try again.";
-    status.className = "text-red-600";
-  }
-});
+      status.textContent = "Message sent successfully!";
+      status.className = "text-green-600";
+      form.reset();
+    } catch {
+      status.textContent = "Something went wrong. Try again.";
+      status.className = "text-red-600";
+    }
+  });
 </script>
