@@ -8,7 +8,7 @@ resource "aws_cloudfront_origin_access_control" "oac" {
 resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   default_root_object = "index.html"
-  aliases             = [var.domain_name]
+  aliases             = var.domain_aliases
 
   origin {
     domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
@@ -32,8 +32,15 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = aws_acm_certificate.cert.arn
+    acm_certificate_arn = var.acm_certificate_arn
     ssl_support_method  = "sni-only"
+    minimum_protocol_version = "TLSv1.3_2025"
+  }
+
+  lifecycle {
+    ignore_changes = [ 
+      viewer_certificate[0].minimum_protocol_version
+     ]
   }
    /* viewer_certificate {
   cloudfront_default_certificate = true
