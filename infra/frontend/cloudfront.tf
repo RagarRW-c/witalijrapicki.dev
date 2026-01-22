@@ -8,7 +8,7 @@ resource "aws_cloudfront_origin_access_control" "oac" {
 resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   default_root_object = "index.html"
-  #aliases             = [var.domain_name]
+  aliases             = [var.domain_name]
 
   origin {
     domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
@@ -31,13 +31,13 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
   }
 
-  /*viewer_certificate {
+  viewer_certificate {
     acm_certificate_arn = aws_acm_certificate.cert.arn
     ssl_support_method  = "sni-only"
-  }*/
-    viewer_certificate {
+  }
+   /* viewer_certificate {
   cloudfront_default_certificate = true
-}
+}*/
 
   restrictions {
     geo_restriction {
@@ -45,3 +45,4 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
   }
 }
+
