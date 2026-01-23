@@ -1,0 +1,45 @@
+name: Terraform Infra (PROD)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - infra/**
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init
+        working-directory: infra/frontend
+        run: terraform init
+
+      - name: Terraform Format Check
+        working-directory: infra/frontend
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: infra/frontend
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra/frontend
+        run: terraform plan -var-file=prod.tfvars
+
+      - name: Terraform Apply
+        working-directory: infra/frontend
+        run: terraform apply -var-file=prod.tfvars -auto-approve
