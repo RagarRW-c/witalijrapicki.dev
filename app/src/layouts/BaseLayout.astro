@@ -1,5 +1,7 @@
 ---
 import "../styles/global.css";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
 ---
 
 <!DOCTYPE html>
@@ -10,9 +12,13 @@ import "../styles/global.css";
     <title>Witalij Rapicki</title>
   </head>
 
-  <body class="min-h-screen bg-gray-50 flex items-center justify-center">
-    <main class="w-full max-w-xl p-6 bg-white rounded-lg shadow">
+  <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <Navbar />
+
+    <main class="flex-1 max-w-5xl mx-auto px-6 py-16">
       <slot />
     </main>
+
+    <Footer />
   </body>
 </html>
