@@ -1,4 +1,4 @@
 output "cloudfront_domain" {
-  value = aws_cloudfront_distribution.cdn.domain_name
+  value = aws_cloudfront_distribution.prod.domain_name
 }
 

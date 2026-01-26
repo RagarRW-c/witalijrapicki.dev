@@ -1,3 +1,8 @@
+variable "environment" {
+  type = string
+  description = "Deployment environment ( prod | showcase )"
+}
+
 variable "domain_name" {
   description = "Public domain name"
   type = string
@@ -8,7 +13,7 @@ variable "domain_aliases" {
 }
 
 variable "bucket_name" {
-  description = "S3 buckeet name for frontend assets"
+  description = "S3 buckeet name for frontend"
   type = string
 }
 
@@ -20,3 +25,5 @@ variable "acm_certificate_arn" {
   description = "ACM certificate ARN (us-east-1) for CloudFront"
   type        = string
 }
+
+

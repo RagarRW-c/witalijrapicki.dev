@@ -1,4 +1,4 @@
-resource "aws_s3_bucket" "site" {
+resource "aws_s3_bucket" "frontend" {
   bucket = var.bucket_name
 
   lifecycle {
@@ -6,24 +6,21 @@ resource "aws_s3_bucket" "site" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "site" {
-  bucket = aws_s3_bucket.site.id
+resource "aws_s3_bucket_public_access_block" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
 
-  block_public_acls = true
-  block_public_policy = true
-  ignore_public_acls = true
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
   restrict_public_buckets = true
 }
 
-data "aws_iam_policy_document" "site_policy" {
+data "aws_iam_policy_document" "frontend" {
   statement {
     sid = "AllowCloudFrontRead"
 
-    actions = ["s3:GetObject"]
-
-    resources = [
-      "${aws_s3_bucket.site.arn}/*"
-    ]
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.frontend.arn}/*"]
 
     principals {
       type        = "Service"
@@ -32,9 +29,7 @@ data "aws_iam_policy_document" "site_policy" {
   }
 }
 
-
-resource "aws_s3_bucket_policy" "site" {
-  bucket = aws_s3_bucket.site.id
-  policy = data.aws_iam_policy_document.site_policy.json
+resource "aws_s3_bucket_policy" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  policy = data.aws_iam_policy_document.frontend.json
 }
-
