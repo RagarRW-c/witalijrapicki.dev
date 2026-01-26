@@ -1,65 +1,18 @@
-<form id="contact-form" class="space-y-4">
-  <input
-    class="w-full border p-3 rounded"
-    name="name"
-    placeholder="Your name"
-    required
-  />
+---
+import "../styles/global.css";
+---
 
-  <input
-    class="w-full border p-3 rounded"
-    name="email"
-    type="email"
-    placeholder="Your email"
-    required
-  />
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Witalij Rapicki</title>
+  </head>
 
-  <textarea
-    class="w-full border p-3 rounded"
-    name="message"
-    rows="5"
-    placeholder="Message"
-    required
-  ></textarea>
-
-  <button
-    class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800"
-    type="submit"
-  >
-    Send
-  </button>
-
-  <p id="status" class="text-sm"></p>
-</form>
-
-<script is:inline>
-  const form = document.getElementById("contact-form");
-  const status = document.getElementById("status");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    status.textContent = "Sending...";
-
-    const data = Object.fromEntries(new FormData(form));
-
-    try {
-      const res = await fetch(
-        "https://d05rer8h1m.execute-api.eu-central-1.amazonaws.com/prod/contact",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!res.ok) throw new Error();
-
-      status.textContent = "Message sent successfully!";
-      status.className = "text-green-600";
-      form.reset();
-    } catch {
-      status.textContent = "Something went wrong. Try again.";
-      status.className = "text-red-600";
-    }
-  });
-</script>
+  <body class="min-h-screen bg-gray-50 flex items-center justify-center">
+    <main class="w-full max-w-xl p-6 bg-white rounded-lg shadow">
+      <slot />
+    </main>
+  </body>
+</html>
