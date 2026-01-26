@@ -1,31 +1,22 @@
 <form id="contact-form" class="space-y-4">
-  <input
-    class="w-full border p-3 rounded"
+  <input class="w-full border p-3 rounded"
     name="name"
     placeholder="Your name"
-    required
-  />
+    required />
 
-  <input
-    class="w-full border p-3 rounded"
+  <input class="w-full border p-3 rounded"
     name="email"
     type="email"
     placeholder="Your email"
-    required
-  />
+    required />
 
-  <textarea
-    class="w-full border p-3 rounded"
+  <textarea class="w-full border p-3 rounded"
     name="message"
     rows="5"
     placeholder="Message"
-    required
-  ></textarea>
+    required></textarea>
 
-  <button
-    class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800"
-    type="submit"
-  >
+  <button class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800">
     Send
   </button>
 
@@ -58,7 +49,7 @@
       status.className = "text-green-600";
       form.reset();
     } catch {
-      status.textContent = "Something went wrong. Try again.";
+      status.textContent = "Something went wrong.";
       status.className = "text-red-600";
     }
   });
