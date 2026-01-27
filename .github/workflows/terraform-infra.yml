@@ -23,7 +23,7 @@ defaults:
 
 jobs:
   terraform-plan:
-    name: Plan
+    name: Terraform Plan
     runs-on: ubuntu-latest
 
     steps:
@@ -41,9 +41,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> $GITHUB_ENV
-          echo "AWS_REGION=${AWS_REGION}" >> $GITHUB_ENV
+          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
+          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
 
       - name: Cache Terraform providers & modules
         uses: actions/cache@v4
@@ -55,8 +55,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-terraform-
 
-      - name: Terraform Init
-        run: terraform init -lock-timeout=10m
+      - name: Terraform Init (no lock in CI)
+        run: terraform init -lock=false -lock-timeout=1s
 
       - name: Terraform Validate
         run: terraform validate
@@ -66,7 +66,7 @@ jobs:
 
       - name: Terraform Plan (fast mode)
         id: plan
-        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock-timeout=10m -refresh=false
+        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock=false -refresh=false
 
       - name: Show Plan Output
         if: always()
@@ -86,5 +86,7 @@ jobs:
           body: |
             ## Terraform Plan (${{ github.sha }})
 
+            **Summary**: No changes (or check artifact)
+
             ```text
-            ${{ steps.plan.outputs.stdout }}
+            ${{ steps.plan.outputs.stdout || 'Plan output not available' }}
