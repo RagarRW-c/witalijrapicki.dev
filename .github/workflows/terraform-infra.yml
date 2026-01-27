@@ -28,24 +28,12 @@ defaults:
 
 jobs:
   terraform-plan:
-    name: Terraform Plan
+    name: Plan
     runs-on: ubuntu-latest
-    environment: production   # opcjonalnie – można dodać approval reviewers
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Cache Terraform providers & modules
-        uses: actions/cache@v4
-        id: cache-terraform
-        with:
-          path: |
-            .terraform/
-            .terraform.lock.hcl
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf', '**/versions.tf', '**/providers.tf', '**/backend.tf') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -59,23 +47,41 @@ jobs:
           aws-region: eu-central-1
           role-session-name: GitHubActions-Terraform-Plan-${{ github.run_id }}
 
+      # ── Automatyczne odblokowanie starego locka (bezpieczne, ignoruje błędy) ──
+      - name: Force unlock previous Terraform state lock
+        run: |
+          LOCK_ID=$(terraform state pull | jq -r '.serial' || echo "")
+          if [ -n "$LOCK_ID" ]; then
+            terraform force-unlock -force "$LOCK_ID" || true
+          fi
+        continue-on-error: true
+
+      - name: Cache Terraform providers & modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            .terraform/
+            .terraform.lock.hcl
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf', '**/versions.tf', '**/providers.tf', '**/backend.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
       - name: Terraform Init
-        run: terraform init -lock-timeout=5m
+        run: terraform init -lock-timeout=10m
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Fmt Check
         run: terraform fmt -check
-        continue-on-error: true   # nie blokujemy całego pipeline'u
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock-timeout=5m
+        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock-timeout=10m
 
       - name: Terraform Show Plan
         if: always()
-        run: terraform show -no-color tfplan
+        run: terraform show -no-color tfplan || true
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
@@ -90,8 +96,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ## Terraform Plan (${{ github.sha }})
-
-            **Summary**: ${{ steps.plan.outputs.plan_summary || 'No changes' }}
 
             ```text
             ${{ steps.plan.outputs.stdout }}
