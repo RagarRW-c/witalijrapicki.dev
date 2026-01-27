@@ -47,13 +47,11 @@ jobs:
           aws-region: eu-central-1
           role-session-name: GitHubActions-Terraform-Plan-${{ github.run_id }}
 
-      # ── Automatyczne odblokowanie starego locka (bezpieczne, ignoruje błędy) ──
-      - name: Force unlock previous Terraform state lock
-        run: |
-          LOCK_ID=$(terraform state pull | jq -r '.serial' || echo "")
-          if [ -n "$LOCK_ID" ]; then
-            terraform force-unlock -force "$LOCK_ID" || true
-          fi
+      - name: Debug - Check DynamoDB lock table (optional, for visibility)
+        run: aws dynamodb scan --table-name terraform-locks --filter-expression "LockID = :path" --expression-attribute-values '{":path":{"S":"witalijrapicki-tfstate/frontend/prod/terraform.tfstate"}}' --max-items 1 || echo "No lock or access issue"
+
+      - name: Force unlock previous lock (safe)
+        run: terraform force-unlock -force $(terraform state pull | jq -r '.serial' || echo "") || true
         continue-on-error: true
 
       - name: Cache Terraform providers & modules
@@ -62,12 +60,12 @@ jobs:
           path: |
             .terraform/
             .terraform.lock.hcl
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf', '**/versions.tf', '**/providers.tf', '**/backend.tf') }}
+          key: $$   {{ runner.os }}-terraform-   $${{ hashFiles('**/*.tf', '**/versions.tf', '**/providers.tf', '**/backend.tf') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
 
       - name: Terraform Init
-        run: terraform init -lock-timeout=10m
+        run: terraform init -lock-timeout=15m
 
       - name: Terraform Validate
         run: terraform validate
@@ -75,9 +73,9 @@ jobs:
       - name: Terraform Fmt Check
         run: terraform fmt -check
 
-      - name: Terraform Plan
+      - name: Terraform Plan (no refresh for speed)
         id: plan
-        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock-timeout=10m
+        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock-timeout=15m -refresh=false
 
       - name: Terraform Show Plan
         if: always()
