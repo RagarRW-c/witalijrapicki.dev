@@ -1,11 +1,11 @@
 variable "environment" {
-  type = string
+  type        = string
   description = "Deployment environment ( prod | showcase )"
 }
 
 variable "domain_name" {
   description = "Public domain name"
-  type = string
+  type        = string
 }
 variable "domain_aliases" {
   description = "All domain aliases for CloudFront"
@@ -14,7 +14,7 @@ variable "domain_aliases" {
 
 variable "bucket_name" {
   description = "S3 buckeet name for frontend"
-  type = string
+  type        = string
 }
 
 variable "project_name" {

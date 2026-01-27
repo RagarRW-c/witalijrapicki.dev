@@ -94,7 +94,7 @@ resource "aws_lambda_permission" "api_gateway" {
 }
 
 resource "aws_api_gateway_gateway_response" "default_4xx" {
-  rest_api_id = aws_api_gateway_rest_api.contact_api.id
+  rest_api_id   = aws_api_gateway_rest_api.contact_api.id
   response_type = "DEFAULT_4XX"
 
   response_parameters = {
@@ -105,7 +105,7 @@ resource "aws_api_gateway_gateway_response" "default_4xx" {
 }
 
 resource "aws_api_gateway_gateway_response" "default_5xx" {
-  rest_api_id = aws_api_gateway_rest_api.contact_api.id
+  rest_api_id   = aws_api_gateway_rest_api.contact_api.id
   response_type = "DEFAULT_5XX"
 
   response_parameters = {
