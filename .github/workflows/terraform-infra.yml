@@ -27,103 +27,37 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write   # 🔴 REQUIRED FOR OIDC
 
     steps:
-      # -------------------------
-      # Checkout
-      # -------------------------
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # -------------------------
-      # Terraform
-      # -------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.6
 
-      # -------------------------
-      # AWS Credentials (CORRECT WAY)
-      # -------------------------
-      - name: Configure AWS credentials
+      # 🔐 OIDC → AWS
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::242046727288:role/GitHubTerraformRole
+          aws-region: eu-central-1
+          role-session-name: github-terraform-plan
 
-      # -------------------------
-      # Cache Terraform
-      # -------------------------
-      - name: Cache Terraform providers & modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            infra/frontend/.terraform
-            infra/frontend/.terraform.lock.hcl
-          key: terraform-${{ runner.os }}-${{ hashFiles('infra/frontend/**/*.tf') }}
-          restore-keys: |
-            terraform-${{ runner.os }}-
-
-      # -------------------------
-      # Terraform Init
-      # -------------------------
       - name: Terraform Init
-        run: terraform init -input=false -lock-timeout=60s
+        run: terraform init -input=false
 
-      # -------------------------
-      # Validate
-      # -------------------------
       - name: Terraform Validate
         run: terraform validate
 
-      # -------------------------
-      # Fmt
-      # -------------------------
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      # -------------------------
-      # Plan (NO HANG)
-      # -------------------------
       - name: Terraform Plan
-        id: plan
         run: |
           terraform plan \
             -var-file=prod.tfvars \
-            -out=tfplan \
             -no-color \
             -input=false
-
-      # -------------------------
-      # Show plan in logs
-      # -------------------------
-      - name: Show Plan Output
-        run: terraform show -no-color tfplan
-
-      # -------------------------
-      # Upload artifact
-      # -------------------------
-      - name: Upload tfplan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: infra/frontend/tfplan
-
-      # -------------------------
-      # PR Comment
-      # -------------------------
-      - name: Comment plan on PR
-        if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ## Terraform Plan ✅
-
-            Backend: **S3 + DynamoDB**
-            Environment: **prod**
-
-            Plan generated successfully.
-            Artifact: **terraform-plan**
