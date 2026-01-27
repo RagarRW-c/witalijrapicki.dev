@@ -2,15 +2,13 @@ name: Terraform Infra (AWS)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'infra/**'
       - '.github/workflows/terraform-infra.yml'
 
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'infra/**'
       - '.github/workflows/terraform-infra.yml'
@@ -26,67 +24,106 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
-      - name: Checkout
+      # -------------------------
+      # Checkout
+      # -------------------------
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # -------------------------
+      # Terraform
+      # -------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.x
+          terraform_version: 1.9.6
 
-      - name: Configure AWS Credentials
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-        run: |
-          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
-          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
+      # -------------------------
+      # AWS Credentials (CORRECT WAY)
+      # -------------------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
+      # -------------------------
+      # Cache Terraform
+      # -------------------------
       - name: Cache Terraform providers & modules
         uses: actions/cache@v4
         with:
           path: |
-            .terraform/
-            .terraform.lock.hcl
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf', '**/versions.tf', '**/providers.tf', '**/backend.tf') }}
+            infra/frontend/.terraform
+            infra/frontend/.terraform.lock.hcl
+          key: terraform-${{ runner.os }}-${{ hashFiles('infra/frontend/**/*.tf') }}
           restore-keys: |
-            ${{ runner.os }}-terraform-
+            terraform-${{ runner.os }}-
 
-      - name: Terraform Init (no lock in CI)
-        run: terraform init -lock=false -lock-timeout=1s
+      # -------------------------
+      # Terraform Init
+      # -------------------------
+      - name: Terraform Init
+        run: terraform init -input=false -lock-timeout=60s
 
+      # -------------------------
+      # Validate
+      # -------------------------
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Fmt Check
-        run: terraform fmt -check
+      # -------------------------
+      # Fmt
+      # -------------------------
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
 
-      - name: Terraform Plan (fast mode)
+      # -------------------------
+      # Plan (NO HANG)
+      # -------------------------
+      - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock=false -refresh=false
+        run: |
+          terraform plan \
+            -var-file=prod.tfvars \
+            -out=tfplan \
+            -no-color \
+            -input=false
 
+      # -------------------------
+      # Show plan in logs
+      # -------------------------
       - name: Show Plan Output
-        if: always()
-        run: terraform show -no-color tfplan || true
+        run: terraform show -no-color tfplan
 
-      - name: Upload Plan Artifact
+      # -------------------------
+      # Upload artifact
+      # -------------------------
+      - name: Upload tfplan artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan
+          name: terraform-plan
           path: infra/frontend/tfplan
 
-      - name: Add Plan to PR Comment
-        if: github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+      # -------------------------
+      # PR Comment
+      # -------------------------
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ## Terraform Plan (${{ github.sha }})
+            ## Terraform Plan ✅
 
-            **Summary**: No changes (or check artifact)
+            Backend: **S3 + DynamoDB**
+            Environment: **prod**
 
-            ```text
-            ${{ steps.plan.outputs.stdout || 'Plan output not available' }}
+            Plan generated successfully.
+            Artifact: **terraform-plan**

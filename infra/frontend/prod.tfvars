@@ -1,3 +1,4 @@
+environment = "prod"
 domain_name = "witalijrapicki.cloud"
 
 domain_aliases = [
