@@ -19,6 +19,10 @@ defaults:
   run:
     working-directory: infra/frontend
 
+concurrency:
+  group: terraform-frontend-prod
+  cancel-in-progress: false
+
 jobs:
   terraform-plan:
     name: Terraform Plan
@@ -27,10 +31,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      id-token: write   # 🔴 REQUIRED FOR OIDC
+      id-token: write   # REQUIRED FOR OIDC
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Terraform
@@ -38,11 +42,11 @@ jobs:
         with:
           terraform_version: 1.9.6
 
-      # 🔐 OIDC → AWS
+      # 🔐 GitHub OIDC → AWS IAM Role
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::242046727288:role/GitHubTerraformRole
+          role-to-assume: arn:aws:iam::242046727288:role/github-actions-terraform
           aws-region: eu-central-1
           role-session-name: github-terraform-plan
 
