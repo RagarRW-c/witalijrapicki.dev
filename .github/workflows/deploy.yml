@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload to S3
         run: |
-          aws s3 sync app/dist s3://witalijrapicki-cloud --delete
+          aws s3 sync dist s3://witalijrapicki-cloud --delete
 
       - name: Invalidate CloudFront
         run: |
