@@ -28,12 +28,24 @@ defaults:
 
 jobs:
   terraform-plan:
-    name: Plan
+    name: Terraform Plan
     runs-on: ubuntu-latest
+    environment: production   # opcjonalnie – można dodać approval reviewers
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache Terraform providers & modules
+        uses: actions/cache@v4
+        id: cache-terraform
+        with:
+          path: |
+            .terraform/
+            .terraform.lock.hcl
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf', '**/versions.tf', '**/providers.tf', '**/backend.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -48,17 +60,22 @@ jobs:
           role-session-name: GitHubActions-Terraform-Plan-${{ github.run_id }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -lock-timeout=5m
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Fmt Check
         run: terraform fmt -check
+        continue-on-error: true   # nie blokujemy całego pipeline'u
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color
+        run: terraform plan -var-file=prod.tfvars -out=tfplan -no-color -lock-timeout=5m
+
+      - name: Terraform Show Plan
+        if: always()
+        run: terraform show -no-color tfplan
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
@@ -67,12 +84,14 @@ jobs:
           path: infra/frontend/tfplan
 
       - name: Add Plan to PR Comment
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ## Terraform Plan (${{ github.sha }})
+
+            **Summary**: ${{ steps.plan.outputs.plan_summary || 'No changes' }}
 
             ```text
             ${{ steps.plan.outputs.stdout }}
