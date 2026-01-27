@@ -1,18 +1,88 @@
-# Terraform
-**/.terraform/*
+# =============================================
+# Terraform / OpenTofu
+# =============================================
+**/.terraform/
 *.tfstate
 *.tfstate.*
-.crash.log
+.terraform.lock.hcl
+crash.log
 terraform.tfvars
+terraform.tfvars.*
+override.tf
+override.tf.json
+*.override.tf
+*.override.tf.json
+*.tfplan
+tfplan.*
+plan.out
+plan.json
+.terraform.tfstate.lock.info
 
-# Node
+# sensitive values (nigdy nie commituj!)
+*.auto.tfvars
+*.sensitive.tfvars
+*.sensitive.tfvars.*
+.env
+.env.*
+secrets.tfvars
+
+# =============================================
+# Astro / Vite / Node.js / Frontend
+# =============================================
 node_modules/
 dist/
+.astro/
+build/
+.cache/
+coverage/
+astro.config.mjs.bak
 
-# OS / IDE
+# Vite / Astro cache i build artifacts
+.vite/
+.temp/
+.tmp/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs i debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log
+
+# Lockfiles (commitujesz jeden – resztę ignoruj jeśli chcesz)
+# pnpm-lock.yaml     ← zostaw jeśli używasz pnpm
+# yarn.lock          ← zostaw jeśli używasz yarn
+# package-lock.json  ← zostaw jeśli używasz npm
+
+# =============================================
+# OS / Edytory / IDE
+# =============================================
 .DS_Store
-.idea/
-.vscode/
+.AppleDouble
+Thumbs.db
+desktop.ini
+ehthumbs.db
+*.swp
+*~
+.Trashes
 
-plan.out
-*.tfplan
+# Visual Studio Code / JetBrains / Sublime
+.vscode/
+.idea/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+
+# Inne lokalne śmieci
+.direnv/
+.envrc
+.tool-versions
+.nvmrc
+*.bak
+*.tmp
