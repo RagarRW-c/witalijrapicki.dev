@@ -40,11 +40,5 @@ jobs:
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Download tfplan artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: infra/frontend
-
       - name: Terraform Apply (from plan)
         run: terraform apply -input=false -auto-approve tfplan

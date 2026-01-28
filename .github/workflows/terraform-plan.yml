@@ -54,9 +54,3 @@ jobs:
             -input=false \
             -no-color \
             -out=tfplan
-
-      - name: Upload tfplan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: infra/frontend/tfplan
