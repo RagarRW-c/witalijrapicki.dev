@@ -1,26 +1,27 @@
-name: Terraform Apply
+name: Terraform Plan
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
 
 defaults:
   run:
     working-directory: infra/frontend
 
 concurrency:
-  group: terraform-apply
+  group: terraform-plan
   cancel-in-progress: false
 
 jobs:
-  apply:
+  plan:
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
+      pull-requests: write
       id-token: write
-
-    environment:
-      name: prod   # ⛔ manual approval required
 
     steps:
       - name: Checkout
@@ -31,15 +32,31 @@ jobs:
         with:
           terraform_version: 1.9.6
 
-      - name: Configure AWS credentials (OIDC – APPLY)
+      - name: Configure AWS credentials (OIDC – PLAN)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::242046727288:role/github-actions-terraform-apply
+          role-to-assume: arn:aws:iam::242046727288:role/github-actions-terraform-plan
           aws-region: eu-central-1
-          role-session-name: github-actions-terraform-apply
 
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Apply
-        run: terraform apply -var-file=prod.tfvars -auto-approve -input=false
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file=prod.tfvars \
+            -input=false \
+            -no-color \
+            -out=tfplan
+
+      - name: Upload tfplan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: infra/frontend/tfplan
