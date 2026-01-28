@@ -1,10 +1,3 @@
-resource "aws_cloudfront_origin_access_control" "oac" {
-  name                              = "site-oac"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
-}
-
 resource "aws_cloudfront_distribution" "prod" {
   enabled             = true
   default_root_object = "index.html"
@@ -12,7 +5,7 @@ resource "aws_cloudfront_distribution" "prod" {
   comment             = "${var.project_name}-${var.environment}"
 
   origin {
-    domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
+    domain_name              = data.aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id                = "s3-frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
@@ -48,4 +41,15 @@ resource "aws_cloudfront_distribution" "prod" {
       restriction_type = "none"
     }
   }
+
+  depends_on = [
+    aws_cloudfront_origin_access_control.oac
+  ]
+}
+
+resource "aws_cloudfront_origin_access_control" "oac" {
+  name                              = "site-oac"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
