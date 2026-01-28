@@ -1,0 +1,59 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+
+  push:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: infra/frontend
+
+concurrency:
+  group: terraform-plan
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.6
+
+      - name: Configure AWS credentials (OIDC – PLAN)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::242046727288:role/github-actions-terraform-plan
+          aws-region: eu-central-1
+          role-session-name: terraform-plan
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=prod.tfvars -input=false -no-color
