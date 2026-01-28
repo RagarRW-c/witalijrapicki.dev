@@ -36,7 +36,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::242046727288:role/github-actions-terraform-apply
           aws-region: eu-central-1
-          role-session-name: terraform-apply
+          role-session-name: github-actions-terraform-apply
 
       - name: Terraform Init
         run: terraform init -input=false
