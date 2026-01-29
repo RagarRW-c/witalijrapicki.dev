@@ -57,8 +57,17 @@ resource "aws_cloudfront_distribution" "prod" {
 
     viewer_protocol_policy = "redirect-to-https"
 
-    allowed_methods = ["POST", "OPTIONS"]
-    cached_methods  = ["GET", "HEAD"]
+    allowed_methods = [
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "POST"
+    ]
+
+    cached_methods = [
+      "GET",
+      "HEAD"
+    ]
 
     forwarded_values {
       query_string = true
