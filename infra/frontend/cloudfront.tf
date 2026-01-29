@@ -21,8 +21,11 @@ resource "aws_cloudfront_distribution" "prod" {
         ""
       )
     )[0]
+    
 
     origin_id = "contact-api"
+    origin_path = "/prod"
+
 
     custom_origin_config {
       http_port              = 80
