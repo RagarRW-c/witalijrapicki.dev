@@ -10,21 +10,21 @@ resource "aws_cloudfront_distribution" "prod" {
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
   origin {
-  domain_name = replace(
-    data.terraform_remote_state.contact.outputs.contact_api_url,
-    "https://",
-    ""
-  )
+    domain_name = replace(
+      data.terraform_remote_state.contact.outputs.contact_api_url,
+      "https://",
+      ""
+    )
 
-  origin_id = "contact-api"
+    origin_id = "contact-api"
 
-  custom_origin_config {
-    http_port              = 80
-    https_port             = 443
-    origin_protocol_policy = "https-only"
-    origin_ssl_protocols   = ["TLSv1.2"]
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
   }
-}
 
 
   default_cache_behavior {
