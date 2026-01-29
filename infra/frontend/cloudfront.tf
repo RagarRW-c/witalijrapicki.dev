@@ -13,13 +13,12 @@ resource "aws_cloudfront_distribution" "prod" {
 
   # ===== CONTACT API ORIGIN =====
   origin {
-    domain_name = replace(
-      data.terraform_remote_state.contact.outputs.contact_api_url,
-      "https://",
-      ""
-    )
+    domain_name = regex(
+      "https://([^/]+)/.*",
+      data.terraform_remote_state.contact.outputs.contact_api_url
+    )[0]
 
-    origin_id = "contact-api" # ← SPÓJNE ID
+    origin_id = "contact-api"
 
     custom_origin_config {
       http_port              = 80
@@ -58,7 +57,7 @@ resource "aws_cloudfront_distribution" "prod" {
 
     viewer_protocol_policy = "redirect-to-https"
 
-    allowed_methods = ["GET", "POST", "OPTIONS"]
+    allowed_methods = ["POST", "OPTIONS"]
     cached_methods  = ["GET", "HEAD"]
 
     forwarded_values {
