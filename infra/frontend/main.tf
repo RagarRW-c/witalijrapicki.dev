@@ -22,9 +22,8 @@ data "terraform_remote_state" "contact" {
   backend = "s3"
 
   config = {
-    bucket       = "witalijrapicki-tfstate"
-    key          = "contact/prod/terraform.tfstate"
-    region       = "eu-central-1"
-    use_lockfile = false
+    bucket = "witalijrapicki-tfstate"
+    key    = "contact/prod/terraform.tfstate"
+    region = "eu-central-1"
   }
 }

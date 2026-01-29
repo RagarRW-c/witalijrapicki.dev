@@ -4,11 +4,14 @@ resource "aws_cloudfront_distribution" "prod" {
   aliases             = var.domain_aliases
   comment             = "${var.project_name}-${var.environment}"
 
+  # ===== S3 ORIGIN =====
   origin {
     domain_name              = data.aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id                = "s3-frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
+
+  # ===== CONTACT API ORIGIN =====
   origin {
     domain_name = replace(
       data.terraform_remote_state.contact.outputs.contact_api_url,
@@ -16,7 +19,7 @@ resource "aws_cloudfront_distribution" "prod" {
       ""
     )
 
-    origin_id = "contact-api"
+    origin_id = "contact-api" # ← SPÓJNE ID
 
     custom_origin_config {
       http_port              = 80
@@ -26,7 +29,7 @@ resource "aws_cloudfront_distribution" "prod" {
     }
   }
 
-
+  # ===== DEFAULT (S3) =====
   default_cache_behavior {
     target_origin_id       = "s3-frontend"
     viewer_protocol_policy = "redirect-to-https"
@@ -41,15 +44,17 @@ resource "aws_cloudfront_distribution" "prod" {
       }
     }
 
+    # REWRITE TYLKO DLA S3
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.rewrite_index.arn
     }
   }
 
+  # ===== /contact → API =====
   ordered_cache_behavior {
-    path_pattern     = "/api/*"
-    target_origin_id = "api-origin"
+    path_pattern     = "/contact*"
+    target_origin_id = "contact-api"
 
     viewer_protocol_policy = "redirect-to-https"
 
@@ -58,7 +63,7 @@ resource "aws_cloudfront_distribution" "prod" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"]
+      headers      = ["Origin", "Content-Type"]
 
       cookies {
         forward = "all"
@@ -77,10 +82,6 @@ resource "aws_cloudfront_distribution" "prod" {
       restriction_type = "none"
     }
   }
-
-  depends_on = [
-    aws_cloudfront_origin_access_control.oac
-  ]
 }
 
 resource "aws_cloudfront_origin_access_control" "oac" {
