@@ -21,9 +21,9 @@ resource "aws_cloudfront_distribution" "prod" {
         ""
       )
     )[0]
-    
 
-    origin_id = "contact-api"
+
+    origin_id   = "contact-api"
     origin_path = "/prod"
 
 
