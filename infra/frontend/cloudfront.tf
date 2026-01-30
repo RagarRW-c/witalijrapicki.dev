@@ -14,13 +14,18 @@ resource "aws_cloudfront_distribution" "prod" {
   # ===== CONTACT API ORIGIN =====
   # ===== CONTACT API ORIGIN =====
   origin {
-    domain_name = regexall(
-      "https://([^/]+)/.*",
-      data.terraform_remote_state.contact.outputs.contact_api_url
-    )[0][1]
+    domain_name = replace(
+      replace(
+        data.terraform_remote_state.contact.outputs.contact_api_url,
+        "https://",
+        ""
+      ),
+      "/prod/contact",
+      ""
+    )
 
     origin_id   = "contact-api"
-    origin_path = "/prod" # ← ← ← TO JEST KLUCZOWE
+    origin_path = "/prod"
 
     custom_origin_config {
       http_port              = 80
