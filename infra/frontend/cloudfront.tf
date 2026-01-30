@@ -1,17 +1,21 @@
 resource "aws_cloudfront_distribution" "prod" {
   enabled             = true
-  default_root_object = "index.html"
-  aliases             = var.domain_aliases
   comment             = "${var.project_name}-${var.environment}"
+  aliases             = var.domain_aliases
+  default_root_object = "index.html"
 
-  # ===== S3 ORIGIN =====
+  # =========================
+  # ORIGIN: S3 FRONTEND
+  # =========================
   origin {
     domain_name              = data.aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id                = "s3-frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
 
-  # ===== CONTACT API ORIGIN =====
+  # =========================
+  # ORIGIN: CONTACT API
+  # =========================
   origin {
     domain_name = split(
       "/",
@@ -32,8 +36,9 @@ resource "aws_cloudfront_distribution" "prod" {
     }
   }
 
-
-  # ===== DEFAULT (S3) =====
+  # =========================
+  # DEFAULT CACHE (S3)
+  # =========================
   default_cache_behavior {
     target_origin_id       = "s3-frontend"
     viewer_protocol_policy = "redirect-to-https"
@@ -48,34 +53,30 @@ resource "aws_cloudfront_distribution" "prod" {
       }
     }
 
-    # REWRITE TYLKO DLA S3
+    # Rewrite /contact → /contact/index.html
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.rewrite_index.arn
     }
   }
 
-  # ===== /contact → API =====
+  # =========================
+  # API: /api/contact
+  # =========================
   ordered_cache_behavior {
-    path_pattern     = "/contact*"
+    path_pattern     = "/api/contact*"
     target_origin_id = "contact-api"
 
     viewer_protocol_policy = "redirect-to-https"
 
     allowed_methods = [
-      "HEAD",
-      "DELETE",
-      "POST",
       "GET",
+      "HEAD",
       "OPTIONS",
-      "PUT",
-      "PATCH"
+      "POST"
     ]
 
-    cached_methods = [
-      "HEAD",
-      "GET"
-    ]
+    cached_methods = ["GET", "HEAD"]
 
     forwarded_values {
       query_string = true
@@ -87,21 +88,47 @@ resource "aws_cloudfront_distribution" "prod" {
     }
   }
 
+  # =========================
+  # SSL
+  # =========================
   viewer_certificate {
     acm_certificate_arn      = var.acm_certificate_arn
     ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.3_2025"
+    minimum_protocol_version = "TLSv1.3_2021"
   }
 
+  # =========================
+  # GEO
+  # =========================
   restrictions {
     geo_restriction {
       restriction_type = "none"
     }
   }
+
+  # =========================
+  # ERROR HANDLING (SSG)
+  # =========================
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
 }
 
+# =========================
+# ORIGIN ACCESS CONTROL
+# =========================
 resource "aws_cloudfront_origin_access_control" "oac" {
-  name                              = "site-oac"
+  name                              = "${var.project_name}-${var.environment}-oac"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"

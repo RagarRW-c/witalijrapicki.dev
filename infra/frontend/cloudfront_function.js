@@ -3,7 +3,7 @@ function handler(event) {
   var uri = request.uri;
 
   // ===== NIE DOTYKAJ API =====
-  if (uri.startsWith("/contact")) {
+  if (uri.startsWith("/api/")) {
     return request;
   }
 
