@@ -2,13 +2,20 @@ import json
 import os
 import boto3
 
-ses = boto3.client("ses", region_name=os.environ["AWS_REGION"])
-
+ses = boto3.client("ses", region_name="eu-central-1")
 TO_EMAIL = os.environ["TO_EMAIL"]
+
 
 def handler(event, context):
     try:
-        body = json.loads(event.get("body", "{}"))
+        print("EVENT:", json.dumps(event))
+
+        body = event.get("body")
+        if body is None:
+            return response(400, {"error": "Empty body"})
+
+        if isinstance(body, str):
+            body = json.loads(body)
 
         name = body.get("name")
         email = body.get("email")
@@ -34,7 +41,7 @@ def handler(event, context):
         return response(200, {"ok": True})
 
     except Exception as e:
-        print(e)
+        print("ERROR:", str(e))
         return response(500, {"error": "Internal error"})
 
 
