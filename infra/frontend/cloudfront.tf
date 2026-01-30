@@ -12,20 +12,15 @@ resource "aws_cloudfront_distribution" "prod" {
   }
 
   # ===== CONTACT API ORIGIN =====
+  # ===== CONTACT API ORIGIN =====
   origin {
-    domain_name = split(
-      "/",
-      replace(
-        data.terraform_remote_state.contact.outputs.contact_api_url,
-        "https://",
-        ""
-      )
-    )[0]
-
+    domain_name = regexall(
+      "https://([^/]+)/.*",
+      data.terraform_remote_state.contact.outputs.contact_api_url
+    )[0][1]
 
     origin_id   = "contact-api"
-    origin_path = "/prod"
-
+    origin_path = "/prod" # ← ← ← TO JEST KLUCZOWE
 
     custom_origin_config {
       http_port              = 80
@@ -34,6 +29,7 @@ resource "aws_cloudfront_distribution" "prod" {
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
+
 
   # ===== DEFAULT (S3) =====
   default_cache_behavior {
