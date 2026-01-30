@@ -1,22 +1,31 @@
 <form id="contact-form" class="space-y-4">
-  <input class="w-full border p-3 rounded"
+  <input
+    class="w-full border p-3 rounded"
     name="name"
     placeholder="Your name"
-    required />
+    required
+  />
 
-  <input class="w-full border p-3 rounded"
+  <input
+    class="w-full border p-3 rounded"
     name="email"
     type="email"
     placeholder="Your email"
-    required />
+    required
+  />
 
-  <textarea class="w-full border p-3 rounded"
+  <textarea
+    class="w-full border p-3 rounded"
     name="message"
     rows="5"
     placeholder="Message"
-    required></textarea>
+    required
+  ></textarea>
 
-  <button class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800">
+  <button
+    type="submit"
+    class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800"
+  >
     Send
   </button>
 
@@ -29,26 +38,34 @@
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     status.textContent = "Sending...";
+    status.className = "text-gray-600";
 
     const data = Object.fromEntries(new FormData(form));
 
     try {
-      const res = await fetch(
-        "https://d05rer8h1m.execute-api.eu-central-1.amazonaws.com/prod/contact",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+
+      const result = await res.json();
 
       status.textContent = "Message sent successfully!";
       status.className = "text-green-600";
       form.reset();
-    } catch {
+
+    } catch (err) {
+      console.error(err);
       status.textContent = "Something went wrong.";
       status.className = "text-red-600";
     }
