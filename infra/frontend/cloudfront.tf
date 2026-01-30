@@ -37,7 +37,7 @@ resource "aws_cloudfront_distribution" "prod" {
   }
 
   # =========================
-  # DEFAULT CACHE (S3)
+  # DEFAULT CACHE BEHAVIOR (S3)
   # =========================
   default_cache_behavior {
     target_origin_id       = "s3-frontend"
@@ -53,7 +53,7 @@ resource "aws_cloudfront_distribution" "prod" {
       }
     }
 
-    # Rewrite /contact → /contact/index.html
+    # Rewrite katalogów → index.html
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.rewrite_index.arn
@@ -61,7 +61,7 @@ resource "aws_cloudfront_distribution" "prod" {
   }
 
   # =========================
-  # API: /api/contact
+  # API CACHE BEHAVIOR
   # =========================
   ordered_cache_behavior {
     path_pattern     = "/api/contact*"
@@ -69,11 +69,15 @@ resource "aws_cloudfront_distribution" "prod" {
 
     viewer_protocol_policy = "redirect-to-https"
 
+    # ⚠️ CloudFront akceptuje TYLKO TEN ZESTAW
     allowed_methods = [
-      "GET",
       "HEAD",
+      "DELETE",
+      "POST",
+      "GET",
       "OPTIONS",
-      "POST"
+      "PUT",
+      "PATCH"
     ]
 
     cached_methods = ["GET", "HEAD"]
@@ -107,7 +111,7 @@ resource "aws_cloudfront_distribution" "prod" {
   }
 
   # =========================
-  # ERROR HANDLING (SSG)
+  # ERROR HANDLING (ASTRO SSG)
   # =========================
   custom_error_response {
     error_code            = 403
